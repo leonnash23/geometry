@@ -16,19 +16,72 @@ class Example(QWidget):
         qp = QPainter()
 
         qp.begin(self)
-        for i in range(100):
-            self.genfig(qp, 10, 15)
+        # for i in range(100):
+        #     self.genfig(qp, 10, 15)
+        p = self.genpoints()
+        qp.setPen(Qt.black)
+        for i in p:
+            qp.drawPoint(i[0], i[1])
         qp.end()
 
+    def genpoints(self):
+        f = [random.randint(15, self.size().width()),
+             random.randint(15, self.size().height())]
+        ap = [f]
+        p = [f]
+        while len(ap) > 0:
+            i = random.randint(0, len(ap)-1)
+            temp_p = ap[i]
+            cond = self.gencond(temp_p)
+            if len(cond) == 0:
+                ap.remove(i)
+                continue
+            if len(p) > 500:
+                break
+            cond = self.checkallpoints(p, cond)
+            for c in cond:
+                if c not in p:
+                    ap.append(c)
+                    p.append(c)
+        return p
+
+    def gencond(self, p):
+        cond = []
+        rad = 15
+        for i in range(random.randint(1, 10)):
+            while True:
+                x = random.randint(p[0] - rad, p[0] + rad)
+                y = random.randint(p[1] - rad, p[1] + rad)
+                r = math.sqrt((x - p[0]) * (x - p[0]) + (y - p[1]) * (y - p[1]))
+                if rad < r < 2 * rad:
+                    cond.append([x, y])
+                    break
+        return cond
+
+    def checkallpoints(self, p, cond):
+        ans = []
+        rad = 15
+        er = False
+        for i in p:
+            for j in cond:
+                r = math.sqrt((j[0] - i[0]) * (j[0] - i[0])
+                              + (j[1] - i[1]) * (j[1] - i[1]))
+                if rad > r > 2 * rad:
+                    er = True
+                    break
+            if not er:
+                ans.append(j)
+        return ans
+
     def genfig(self, qp, p_count, rad):
-        A = self.genpoints(p_count, rad)
+        A = self.genfigpoints(p_count, rad)
         H = self.jarvismarch(A)
         qp.setPen(Qt.black)
         for i in range(len(H) - 1):
             qp.drawLine(A[H[i]][0], A[H[i]][1], A[H[i + 1]][0], A[H[i + 1]][1])
         qp.drawLine(A[H[0]][0], A[H[0]][1], A[H[-1]][0], A[H[-1]][1])
 
-    def genpoints(self, count, rad):
+    def genfigpoints(self, count, rad):
         size = self.size()
         p = [[random.randint(rad, size.width() - rad),
               random.randint(rad, size.height() - rad)]]
